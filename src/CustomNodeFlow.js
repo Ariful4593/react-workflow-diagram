@@ -1,22 +1,18 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import ButtonEdge from "./ButtonEdge.js";
 import ReactFlow, {
-  isEdge,
   removeElements,
   addEdge,
-  MiniMap,
-  Controls
 } from "react-flow-renderer";
 import {
   useReactFlow,
   ReactFlowProvider,
   useEdgesState,
-  updateEdge
+  updateEdge,
+  useNodesState
 } from "reactflow";
 import ColorSelectorNode from "./ColorSelectorNode";
 import "./style.css";
-import TextUpdaterNode from "./TextUpdaterNode.js";
-// import "./styles.css";
 
 const initBgColor = "#b1b0bf";
 
@@ -36,6 +32,16 @@ const CustomNodeFlow = () => {
     // setElements(newNode);
   };
 
+  const [nodeId, setNodeId] = useState(0);
+  const [updateNode, setUpdateNode] = useState({});
+  const [labelName, setLabelName] = useState("");
+
+  const openDrawer = (id) => {
+    setNodeId(id);
+  }
+
+
+  // console.log('line 48', updateNode);
   const initData = [
     {
       id: "1",
@@ -71,7 +77,7 @@ const CustomNodeFlow = () => {
       id: "3",
       // type: "output",
       type: "selectorNode",
-      data: { label: " A", deleteNode: deleteNode },
+      data: { label: " A", deleteNode: deleteNode, openDrawer: openDrawer },
       position: { x: 650, y: 25 },
       style: {
         border: "2px solid black",
@@ -87,7 +93,7 @@ const CustomNodeFlow = () => {
       id: "108",
       // type: "output",
       type: "selectorNode",
-      data: { label: " A-108", deleteNode: deleteNode },
+      data: { label: " A-108", deleteNode: deleteNode, openDrawer: openDrawer },
       position: { x: 650, y: -45 },
       style: {
         border: "2px solid black",
@@ -118,7 +124,7 @@ const CustomNodeFlow = () => {
       id: "4",
       // type: "output",
       type: "selectorNode",
-      data: { label: " B", deleteNode: deleteNode },
+      data: { label: " B", deleteNode: deleteNode, openDrawer: openDrawer },
       position: { x: 650, y: 100 },
       targetPosition: "left",
       style: {
@@ -133,7 +139,7 @@ const CustomNodeFlow = () => {
       id: "5",
       // type: "output",
       type: "selectorNode",
-      data: { label: " C", deleteNode: deleteNode },
+      data: { label: " C", deleteNode: deleteNode, openDrawer: openDrawer },
       style: {
         border: "2px solid black",
         borderRadius: "5px",
@@ -146,8 +152,9 @@ const CustomNodeFlow = () => {
     },
     {
       id: "6",
-      type: "output",
-      data: { label: " D", deleteNode: deleteNode },
+      // type: "output",
+      type: "selectorNode",
+      data: { label: " D", deleteNode: deleteNode, openDrawer: openDrawer },
       style: {
         border: "2px solid black",
         borderRadius: "5px",
@@ -160,8 +167,9 @@ const CustomNodeFlow = () => {
     },
     {
       id: "7",
-      type: "output",
-      data: { label: " E", deleteNode: deleteNode },
+      // type: "output",
+      type: "selectorNode",
+      data: { label: " E", deleteNode: deleteNode, openDrawer: openDrawer },
       style: {
         border: "2px solid black",
         borderRadius: "5px",
@@ -182,7 +190,8 @@ const CustomNodeFlow = () => {
     {
       id: "9",
       // type: "output",
-      data: { label: " G", deleteNode: deleteNode },
+      type: "selectorNode",
+      data: { label: " G", deleteNode: deleteNode, openDrawer: openDrawer },
       style: {
         border: "2px solid black",
         borderRadius: "5px",
@@ -194,8 +203,9 @@ const CustomNodeFlow = () => {
     },
     {
       id: "10",
-      type: "output",
-      data: { label: " H", deleteNode: deleteNode },
+      // type: "output",
+      type: "selectorNode",
+      data: { label: " H", deleteNode: deleteNode, openDrawer: openDrawer },
       style: {
         border: "2px solid black",
         borderRadius: "5px",
@@ -339,7 +349,32 @@ const CustomNodeFlow = () => {
   const [elements, setElements] = useState(initData);
   const [bgColor, setBgColor] = useState(initBgColor);
   const edgeUpdateSuccessful = useRef(true);
+  const [refresh, setRefresh] = useState(false);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initData);
+  useEffect(() => {
+    setNodes((els) => {
+      return els.map((el) => {
+        if (el.id == nodeId) {
+          el.data.label = labelName;
+        }
+        return el;
+      });
+    });
+  }, [labelName, setNodes])
+  console.log('line 364', nodes)
+  const handleNodeUpdate = (id, label) => {
+    setElements((els) => {
+      // return els.map((el) => {
+      //   if (el.id == id) {
+      //     el.data.label = label;
+      //   }
+      //   return el;
+      // });
+    });
+    setRefresh(true);
+  }
 
+  console.log('LIne 372', elements)
   const onEdgeUpdateStart = useCallback(() => {
     edgeUpdateSuccessful.current = false;
   }, []);
@@ -355,6 +390,9 @@ const CustomNodeFlow = () => {
   const onElementClick = (event, element) => {
     console.log("Element clicked", element);
   };
+
+  
+
   const [edges, setEdges, onEdgesChange] = useEdgesState(initData);
   const onEdgeUpdate = useCallback((oldEdge, newConnection) => {
     setEdges((els) => updateEdge(oldEdge, newConnection, els));
@@ -375,11 +413,6 @@ const CustomNodeFlow = () => {
   };
   // console.log(elements);
 
-  useEffect(() => {
-    if (reactflowInstance && elements.length > 0) {
-      reactflowInstance.fitView();
-    }
-  }, [reactflowInstance, elements.length]);
 
   const onElementsRemove = useCallback(
     (elementsToRemove) =>
@@ -415,8 +448,6 @@ const CustomNodeFlow = () => {
 
   const connectingNodeId = useRef(null);
   const onConnectStart = useCallback((_, { nodeId }) => {
-    console.log("Line 361", nodeId);
-
     connectingNodeId.current = nodeId;
   }, []);
 
@@ -425,22 +456,12 @@ const CustomNodeFlow = () => {
   const onConnectEnd = useCallback(
     (event) => {
       const targetIsPane = event.target.classList.contains("react-flow__pane");
-      console.log("line 368", event.target);
-      // console.log("line 344", event);
-
-      const position = elements.find(
-        (item) => item.id === connectingNodeId.current
-      )?.position;
-      console.log("line 385", position);
-
       if (targetIsPane) {
-        // we need to remove the wrapper bounds, in order to get the correct position
         const {
           top,
           left,
           bottom
         } = reactFlowWrapper.current.getBoundingClientRect();
-        console.log("Line 620", { top, left, bottom });
         const id = `${Math.floor(Math.random() * (1000 - 100 + 1) + 100)}`;
         const currentNode = elements.find(
           (item) => item.id === connectingNodeId.current
@@ -456,16 +477,11 @@ const CustomNodeFlow = () => {
         const newNode = [
           {
             id,
-            // we are removing the half of the node width (75) to center the new node
-            // position: project({
-            //   x: currentNode.x + event.clientX,
-            //   y: -30
-            // }),
             position: project({
               x: event.clientX - left - 75,
               y: event.clientY - top
             }),
-            data: { label: `Node ${id}`, deleteNode: deleteNode },
+            data: { label: `Node ${id}`, deleteNode: deleteNode, openDrawer: openDrawer },
             type: "selectorNode",
             style: {
               border: "2px solid black",
@@ -482,7 +498,7 @@ const CustomNodeFlow = () => {
             target: `${id}`,
             sourceHandle: "a",
             animated: true,
-            data: { name: "Ariful Islam", deleteEdge: deleteNode },
+            data: { deleteEdge: deleteNode },
             type: "buttonedge",
             style: { stroke: "#fff" }
           }
@@ -512,7 +528,7 @@ const CustomNodeFlow = () => {
         connectionLineStyle={connectionLineStyle}
         snapToGrid={true}
         snapGrid={snapGrid}
-        defaultZoom={1.5}
+        // defaultZoom={1.5}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
         onEdgeUpdate={onEdgeUpdate}
@@ -520,27 +536,43 @@ const CustomNodeFlow = () => {
         onEdgeUpdateEnd={onEdgeUpdateEnd}
         onEdgesChange={onEdgesChange}
         edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
       >
-        {/* <MiniMap
-          nodeStrokeColor={(n) => {
-            if (n.type === "input") return "#0041d0";
-            if (n.type === "selectorNode") return bgColor;
-            if (n.type === "output") return "#ff0072";
-          }}
-          nodeColor={(n) => {
-            if (n.type === "selectorNode") return bgColor;
-            return "#fff";
-          }}
-        /> */}
-
-        {/* <Controls>
-          <ControlButton onClick={(e) => console.log("Deleted node", e)}>
-            Delete Node
-          </ControlButton>
-        </Controls> */}
       </ReactFlow>
-
-      {/* <button onClick={() => addNode()}>Add new node</button> */}
+      <nav className="navbar bg-light fixed-top">
+        <div className="container-fluid">
+          {/* <a className="navbar-brand" href="#">Offcanvas navbar</a>
+          <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+            <span className="navbar-toggler-icon"></span>
+          </button> */}
+          <div className="offcanvas offcanvas-end" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+            <div className="offcanvas-header">
+              <h5 className="offcanvas-title" id="offcanvasNavbarLabel">Canvas</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div className="offcanvas-body">
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                // const newElements = elements.map((el) => {
+                //   if (el.id === nodeId) {
+                //     el.data.label = labelName;
+                //   }
+                //   return el;
+                // });
+                // setElements(newElements);
+                // setLabelName('');
+                // setRefresh(true);
+                // console.log('line 559', newElements);
+              }}>
+                <label htmlFor="label">Update label</label>
+                <input type="text" required value={labelName} onChange={({ target }) => setLabelName(target.value)} name="label-1" className="form-control" id="" />
+                <button
+                  type="submit" data-bs-dismiss={labelName ? 'offcanvas' : ''} aria-label="Close" className="btn btn-primary mt-2">Update</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 };
@@ -551,7 +583,3 @@ export default () => (
     <CustomNodeFlow />
   </ReactFlowProvider>
 );
-
-const CustomLinkBtn = () => {
-  return <button>Delete Node</button>;
-};

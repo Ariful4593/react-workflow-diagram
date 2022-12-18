@@ -6,6 +6,21 @@ import "./style.css";
 export default memo((props) => {
   // console.log("LIne 6", props);
 
+  const [offcanvasHandler, setOffcanvasHandler] = React.useState('');
+
+  const handleClick = (value) => {
+    switch (value) {
+      case 1:
+        // setOffcanvasHandler('');
+        break;
+      case 2:
+        setOffcanvasHandler('#offcanvasNavbar');
+        break;
+      case 3:
+        console.log("triple click");
+        break;
+    }
+  }
   return (
     <div>
       <Handle
@@ -13,12 +28,13 @@ export default memo((props) => {
         position="left"
         style={{ background: "#784be8" }}
         onConnect={(params) => console.log("handle onConnect", params)}
-        // isConnectable={true}
+      // isConnectable={true}
       />
       <div>
         <div className="single-node">
-          <small style={{ cursor: "pointer" }}>{props.data?.label}</small>
-          {/* <button className="btn btn-danger">Edit</button> */}
+          <small style={{ cursor: "pointer" }} onClick={() => {
+            props.data.openDrawer(props.id);
+          }} className="navbar-toggler" data-bs-toggle="offcanvas" data-bs-target={'#offcanvasNavbar'} aria-controls="offcanvasNavbar">{props.data?.label}</small>
           <div
             className="close-icon"
             style={{ cursor: "pointer" }}
@@ -39,8 +55,8 @@ export default memo((props) => {
         type="source"
         position="right"
         id="b"
-        style={{ bottom: 15, top: "auto", background: "#784be8" }}
-        // isConnectable={true}
+        style={{ bottom: 5, top: "auto", background: "#784be8" }}
+      // isConnectable={true}
       />
 
       {/* <nav className="navbar bg-light fixed-top">
